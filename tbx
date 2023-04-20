@@ -125,7 +125,13 @@ case $CMD in
 			echo "Toolbox conainter not found. Creating it ... "
 			create
 		fi
-		start
+		# new shell if already running
+		if podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+			echo "Toolbox container $NAME already running. Spawning a new shell ... "
+			shell
+		else
+			start
+		fi
 		;;
 	stop)
 		stop
