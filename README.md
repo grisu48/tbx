@@ -6,6 +6,8 @@ I will build my own container on OBS one day, for now this is good enough.
 
 ## Usage
 
+To create and enter the custom toolbox container, just run `tbx`. This will create a new container and put attach to it.
+
 ```
 Usage: ./tbx COMMAND
 COMMANDS:
@@ -18,3 +20,9 @@ COMMANDS:
   create           (Re)-create the container
   update           Update the container
 ```
+
+### Install
+
+To install the script to `$HOME/bin`, do
+
+    make install
