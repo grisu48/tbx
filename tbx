@@ -1,0 +1,154 @@
+#!/bin/bash -e
+
+NAME="tbx"
+IMAGE="registry.opensuse.org/opensuse/tumbleweed"
+VERSION="0.1"
+
+function create {
+	container=`podman create --replace --name "$NAME" --hostname "$NAME" -ti --userns= --net=host --ipc=host --pid=host --cap-add=NET_ADMIN --cap-add=NET_RAW "$IMAGE"`
+	podman container start "$NAME"
+	echo "Installing stuff ... "
+	podman container exec "$NAME" zypper -n ref
+	podman container exec "$NAME" zypper -n in htop iftop iotop telnet tcpdump pv progress rsync sysstat
+	echo "Container $NAME ($container) ready to be used"
+}
+
+function start {
+	# Start tblx container, if not yet running
+	if ! podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		echo "Starting tbx container ... "
+		podman container start --attach --interactive "$NAME"
+	else
+		echo "$NAME container is already running. Refusing to start it again"
+		echo ""
+		echo "You can use 'podman attach $NAME' to attach to the existing container"
+		echo "            'podman exec -ti $NAME /bin/bash' to run a new bash within that container"
+		echo ""
+		exit 1
+	fi
+}
+
+function attach {
+	if ! podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		echo "Container is not running. Starting it ... "
+		podman container start "$NAME"
+	fi
+	podman container attach -i "$NAME"
+}
+
+function shell {
+	if ! podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		echo "Container is not running. Starting it ... "
+		podman container start "$NAME"
+	fi
+	podman exec -ti "$NAME" /bin/bash
+}
+
+function stop {
+	podman container stop "$NAME" || true >/dev/null
+}
+
+function status {
+	if podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		echo "$NAME is running"
+	elif podman container ls --all --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		echo "$NAME stopped"
+	else
+		echo "$NAME does not exist"
+	fi
+}
+
+function update {
+	# Start container, if not yet running
+	CLOSE=0
+	if ! podman ps --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		podman container start "$NAME"
+		CLOSE=1
+	fi
+	podman container exec "$NAME" bash -c 'zypper ref && zypper -n dup'
+	if [[ $CLOSE == 1 ]]; then
+		podman container stop "$NAME"
+	fi
+}
+
+function delete {
+	# only if container exists
+	if podman container ls --all --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+		stop
+		podman container rm "$NAME" >/dev/null
+	fi
+}
+
+function usage {
+	echo "tbx - phoenix' toolbox container"
+	echo "Usage: $0 COMMAND"
+	echo "COMMANDS:"
+	echo "  start            Start and attach to container (default)"
+	echo "  stop             Stop the container"
+	echo "  status           Show the current container status"
+	echo "  attach           Attach to the running container"
+	echo "  shell            Fork a new (bash) shell in an already running container"
+	echo "  rm               Delete the container"
+	echo "  create           (Re)-create the container"
+	echo "  update           Update the container"
+}
+
+# Program argument
+CMD=${1:-start}
+
+
+
+
+case $CMD in
+	help)
+		usage
+		exit 0
+		;;
+	--help)
+		usage
+		exit 0
+		;;
+	version)
+		echo "tbx version $VERSION"
+		exit 0
+		;;
+	--version)
+		echo "tbx version $VERSION"
+		exit 0
+		;;
+	create)
+		create
+		;;
+	start)
+		# Check if toolbox container is present
+		if ! podman ps --all --format "{{.Names}}" | grep "$NAME" >/dev/null; then
+			echo "Toolbox conainter not found. Creating it ... "
+			create
+		fi
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	attach)
+		attach
+		;;
+	shell)
+		shell
+		;;
+	rm)
+		delete
+		;;
+	update)
+		update
+		;;
+	*)
+		echo "Invalid command: $CMD"
+		echo "Usage '$0 help' to display available commands"
+		exit 1
+		;;
+esac
+
