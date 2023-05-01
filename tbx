@@ -1,15 +1,17 @@
 #!/bin/bash -e
 
 NAME="tbx"
-IMAGE="registry.opensuse.org/opensuse/tumbleweed"
+#IMAGE="registry.opensuse.org/opensuse/tumbleweed"
+IMAGE="registry.opensuse.org/home/ph03nix/containers/tumbleweed/containers:toolbox"
 VERSION="0.1"
 
 function create {
 	container=`podman create --replace --name "$NAME" --hostname "$NAME" -ti --userns= --net=host --ipc=host --pid=host --cap-add=NET_ADMIN --cap-add=NET_RAW "$IMAGE"`
 	podman container start "$NAME"
-	echo "Installing stuff ... "
-	podman container exec "$NAME" zypper -n ref
-	podman container exec "$NAME" zypper -n in htop iftop iotop telnet tcpdump pv progress rsync sysstat
+	## Note: Installation is no longer required in the new container.
+	#echo "Installing stuff ... "
+	#podman container exec "$NAME" zypper -n ref
+	#podman container exec "$NAME" zypper -n in htop iftop iotop telnet tcpdump pv progress rsync sysstat
 	echo "Container $NAME ($container) ready to be used"
 }
 

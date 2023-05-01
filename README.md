@@ -2,7 +2,7 @@
 
 phoenix' own toolbox container. This is just a Tumbleweed container with additional privileges and pre-installed (debugging) packages because I got annoyed by the limited package selection in `toolbox` on some minimal distributions.
 
-I will build my own container on OBS one day, for now this is good enough.
+This project is mainly a wrapper around my own [toolbox](registry.opensuse.org/home/ph03nix/containers/tumbleweed/containers:toolbox) container from [OBS](https://build.opensuse.org/package/show/home:ph03nix:containers/toolbox). See the attached [Dockerfile](Dockerfile) for how it works.
 
 ## Usage
 
